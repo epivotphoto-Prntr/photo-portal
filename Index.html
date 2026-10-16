@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --warning-bg: #fffbeb;
+      --warning-border: #f59e0b;
+      --error-bg: #fef2f2;
+      --error-border: #ef4444;
+      --bg: #f8fafc;
+      --text: #1e293b;
+      --border: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
+    
+    .card {
+      background: #9b5143;
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    h2 { text-align: center; color: var(--text); margin-bottom: 6px; font-size: 1.4rem; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
+    input[type="text"], input[type="email"], input[type="tel"], select, textarea, input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    textarea { resize: vertical; min-height: 60px; }
+
+    /* Builder Box */
+    .builder-box {
+      background-color: #f8fafc;
+      border: 1px dashed var(--primary);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+    }
+    .builder-title { font-weight: 700; font-size: 0.9rem; color: var(--primary); margin-bottom: 12px; }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+      border: none;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 6px;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-secondary:hover { background: #cbd5e1; }
+
+    /* Cart Summary List */
+    .cart-container {
+      margin-bottom: 18px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
+    .cart-header { background: #f1f5f9; padding: 10px 14px; font-weight: 600; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; }
+    .cart-item:last-child { border-bottom: none; }
+    .btn-remove { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
+
+    .notice-box {
+      background-color: var(--warning-bg);
+      border-left: 4px solid var(--warning-border);
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: #92400e;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    .error-notice {
+      background-color: var(--error-bg);
+      border-left: 4px solid var(--error-border);
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: #991b1b;
+      margin-bottom: 16px;
+      display: none;
+      line-height: 1.4;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .checkbox-group input { margin-top: 2px; width: 16px; height: 16px; }
+
+    .estimate-box {
+      background: #f1f5f9;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .estimate-price { color: var(--primary); font-size: 1.1rem; }
+
+    .btn-submit {
+      width: 100%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-submit:hover { background-color: var(--primary-hover); }
+    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.8; }
+
+    #statusContainer { display: none; margin-top: 20px; text-align: center; }
+    .progress-bar-bg { width: 100%; background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 10px; }
+    .progress-bar-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.2s; }
+    .status-text { font-size: 0.88rem; font-weight: 500; color: #334155; }
+
+    #successContainer { display: none; text-align: center; margin-top: 10px; }
+    .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .success-msg { font-size: 0.9rem; color: #475569; line-height: 1.5; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>📸 Photo Print Order Portal</h2>
+  <p class="subtitle">Select sizes, add photos to your cart & checkout!</p>
+
+  <div class="notice-box">
+    ⚠️ <strong>Crop Check:</strong> Ensure vital details fit your selected print aspect ratios. Free local delivery ($15.00 order minimum).
+  </div>
+
+  <div class="error-notice" id="minOrderWarning">
+    ⚠️ <strong>Order Minimum:</strong> A $15.00 subtotal minimum is required. Please add more items to your cart.
+  </div>
+
+  <form id="uploadForm">
+    <div class="form-group">
+      <label for="customerName">Full Name *</label>
+      <input type="text" id="customerName" required placeholder="Jane Smith">
+    </div>
+
+    <div class="form-group">
+      <label for="customerEmail">Email Address * <span style="font-weight:400; color:#64748b;">(For payment link)</span></label>
+      <input type="email" id="customerEmail" required placeholder="jane@example.com">
+    </div>
+
+    <div class="form-group">
+      <label for="phoneNumber">Phone Number *</label>
+      <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000">
+    </div>
+
+    <!-- Multi-Size Cart Builder Section -->
+    <div class="builder-box">
+      <div class="builder-title">➕ Add Photo Size Batch</div>
+      
+      <div class="form-group" style="margin-bottom:10px;">
+        <label for="printSize">Select Print Size</label>
+        <select id="printSize">
+          <option value="4x6 Standard">4x6 Standard Print ($1.00 each)</option>
+          <option value="4x4 Square">4x4 Square Print ($1.00 each)</option>
+          <option value="2x2">2x2 Mini Squares ($2.00 each)</option>
+          <option value="2x3">Wallet Size Set ($2.00 each)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:10px;">
+        <label for="photoBatchFiles">Choose Photos for this Size</label>
+        <input type="file" id="photoBatchFiles" multiple accept=".jpg,.jpeg,.png,.heic,.HEIC">
+      </div>
+
+      <button type="button" class="btn-secondary" onclick="addBatchToCart()">➕ Add Batch to Order Cart</button>
+    </div>
+
+    <!-- Active Cart List -->
+    <div class="cart-container" id="cartContainer">
+      <div class="cart-header">🛒 Order Cart Summary</div>
+      <div id="cartList"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#64748b;">(Free Delivery)</span></label>
+      <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="deliveryInstructions">Delivery Instructions (Optional)</label>
+      <textarea id="deliveryInstructions" placeholder="Gate code #1234, leave package on porch..."></textarea>
+    </div>
+
+    <div class="checkbox-group">
+      <input type="checkbox" id="copyrightCheck" required>
+      <label for="copyrightCheck" style="font-weight:normal; display:inline;">
+        I confirm that I own or have legal printing rights for all uploaded photos. *
+      </label>
+    </div>
+
+    <div class="estimate-box">
+      <span>Estimated Total (inc. tax):</span>
+      <span class="estimate-price" id="estimateDisplay">$0.00</span>
+    </div>
+
+    <button type="submit" id="submitBtn" class="btn-submit" disabled>📥 Submit Order for Review</button>
+  </form>
+
+  <div id="statusContainer">
+    <div class="status-text" id="statusBox">Initializing secure upload...</div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </div>
+
+  <div id="successContainer">
+    <div class="success-icon">🎉</div>
+    <h3>Order Submitted Successfully!</h3>
+    <p class="success-msg" id="successDetails">
+      Your photos have been uploaded and your order reference is <strong id="refIdDisplay"></strong>. 
+      We are reviewing your print quality and crops. You will receive your secure Square payment link via email and text shortly!
+    </p>
+  </div>
+</div>
+
+<script>
+  const SIZE_PRICES = {
+    '4x6 Standard': 1.00,
+    '4x4 Square': 1.00,
+    '2x2 Minis(4)': 2.00,
+    '2x3(2)' : 2.00
+  };
+
+  const ORDER_MINIMUM = 15.00;
+  const TAX_RATE = 0.09;
+
+  let cart = []; // Array of batch objects: { id, printSize, fileCount, files, price, subtotal }
+
+  function addBatchToCart() {
+    const sizeSelect = document.getElementById('printSize');
+    const fileInput = document.getElementById('photoBatchFiles');
+    const files = fileInput.files;
+
+    if (!files || files.length === 0) {
+      alert('Please select at least one photo file for this size.');
+      return;
+    }
+
+    const printSize = sizeSelect.value;
+    const unitPrice = SIZE_PRICES[printSize] || 1.00;
+    const fileCount = files.length;
+    const subtotal = fileCount * unitPrice;
+
+    cart.push({
+      id: 'batch_' + Date.now(),
+      printSize: printSize,
+      fileCount: fileCount,
+      files: Array.from(files),
+      unitPrice: unitPrice,
+      subtotal: subtotal
+    });
+
+    // Reset file input for next batch
+    fileInput.value = '';
+    renderCart();
+  }
+
+  function removeBatch(batchId) {
+    cart = cart.filter(item => item.id !== batchId);
+    renderCart();
+  }
+
+  function renderCart() {
+    const cartContainer = document.getElementById('cartContainer');
+    const cartList = document.getElementById('cartList');
+    const submitBtn = document.getElementById('submitBtn');
+    const minWarning = document.getElementById('minOrderWarning');
+
+    if (cart.length === 0) {
+      cartContainer.style.display = 'none';
+      cartList.innerHTML = '';
+      document.getElementById('estimateDisplay').innerText = '$0.00';
+      submitBtn.disabled = true;
+      minWarning.style.display = 'none';
+      return;
+    }
+
+    cartContainer.style.display = 'block';
+    let html = '';
+    let grandSubtotal = 0;
+
+    cart.forEach(item => {
+      grandSubtotal += item.subtotal;
+      html += `
+        <div class="cart-item">
+          <div>
+            <strong>${item.fileCount}x ${item.printSize}</strong>
+            <div style="font-size:0.78rem; color:#64748b;">$${item.unitPrice.toFixed(2)} each = $${item.subtotal.toFixed(2)}</div>
+          </div>
+          <button type="button" class="btn-remove" onclick="removeBatch('${item.id}')">Remove</button>
+        </div>
+      `;
+    });
+
+    cartList.innerHTML = html;
+
+    const tax = grandSubtotal * TAX_RATE;
+    const total = grandSubtotal + tax;
+
+    document.getElementById('estimateDisplay').innerText = '$' + total.toFixed(2);
+
+    if (grandSubtotal < ORDER_MINIMUM) {
+      submitBtn.disabled = true;
+      minWarning.style.display = 'block';
+    } else {
+      submitBtn.disabled = false;
+      minWarning.style.display = 'none';
+    }
+  }
+
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (cart.length === 0) {
+      alert('Your cart is empty. Please add photos to your cart first.');
+      return;
+    }
+
+    let grandSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+    if (grandSubtotal < ORDER_MINIMUM) {
+      alert('Order subtotal must be at least $15.00.');
+      return;
+    }
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('uploadForm').style.display = 'none';
+    document.getElementById('statusContainer').style.display = 'block';
+
+    // Prepare order data summary
+    const cartItemsSummary = cart.map(item => ({
+      printSize: item.printSize,
+      fileCount: item.fileCount
+    }));
+
+    const orderData = {
+      name: document.getElementById('customerName').value,
+      email: document.getElementById('customerEmail').value,
+      phone: document.getElementById('phoneNumber').value,
+      address: document.getElementById('deliveryAddress').value,
+      instructions: document.getElementById('deliveryInstructions').value,
+      cartItems: cartItemsSummary
+    };
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (!response.success) {
+          alert('Error processing order: ' + response.error);
+          resetForm();
+          return;
+        }
+
+        // Flatten all files across cart items into a single queue for uploading
+        let uploadQueue = [];
+        cart.forEach(item => {
+          // Clean size tag for Cloudinary prefix (e.g. "4x6_Standard")
+          const cleanSizeTag = item.printSize.replace(/[^a-zA-Z0-9]/g, '_');
+          item.files.forEach(file => {
+            uploadQueue.push({ file: file, prefix: cleanSizeTag });
+          });
+        });
+
+        uploadFilesSequentially(response.folderName, uploadQueue, 0, response.orderId);
+      })
+      .withFailureHandler(function(err) {
+        alert('Server communication error: ' + err);
+        resetForm();
+      })
+      .processNewOrder(orderData);
+  });
+
+  function uploadFilesSequentially(folderName, queue, index, orderId) {
+    const statusBox = document.getElementById('statusBox');
+    const progressBar = document.getElementById('progressBar');
+
+    if (index >= queue.length) {
+      document.getElementById('statusContainer').style.display = 'none';
+      document.getElementById('successContainer').style.display = 'block';
+      document.getElementById('refIdDisplay').innerText = orderId;
+      return;
+    }
+
+    const item = queue[index];
+    const progressPercent = Math.round((index / queue.length) * 100);
+    statusBox.innerText = `Uploading photo ${index + 1} of ${queue.length} (${item.file.name})...`;
+    progressBar.style.width = progressPercent + '%';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const fileData = {
+        name: item.file.name,
+        prefix: item.prefix,
+        base64: e.target.result
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          uploadFilesSequentially(folderName, queue, index + 1, orderId);
+        })
+        .withFailureHandler(function(err) {
+          uploadFilesSequentially(folderName, queue, index + 1, orderId);
+        })
+        .uploadPhotoToCloudinary(folderName, fileData);
+    };
+
+    reader.readAsDataURL(item.file);
+  }
+
+  function resetForm() {
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('uploadForm').style.display = 'block';
+    document.getElementById('statusContainer').style.display = 'none';
+    renderCart();
+  }
+</script>
+</body>
+</html>
