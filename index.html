@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Photo Print Order Portal</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -38,7 +40,7 @@
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
-      font-size: 0.95rem;
+      font-size: 16px; /* 16px stops iPhones from zooming in when a field is tapped */
       outline: none;
       background: #fff;
     }
@@ -59,7 +61,7 @@
       background: #e2e8f0;
       color: #1e293b;
       border: none;
-      padding: 10px 14px;
+      padding: 12px 14px;
       font-size: 0.88rem;
       font-weight: 600;
       border-radius: 6px;
@@ -81,7 +83,7 @@
     .cart-header { background: #f1f5f9; padding: 10px 14px; font-weight: 600; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
     .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; }
     .cart-item:last-child { border-bottom: none; }
-    .btn-remove { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
+    .btn-remove { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 10px; padding: 8px; }
 
     .notice-box {
       background-color: var(--warning-bg);
@@ -151,6 +153,10 @@
     #successContainer { display: none; text-align: center; margin-top: 10px; }
     .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
     .success-msg { font-size: 0.9rem; color: #475569; line-height: 1.5; margin-top: 8px; }
+
+    /* Shown if some photos could not be uploaded */
+    #retryContainer { display: none; margin-top: 20px; text-align: center; }
+    #retryContainer .success-msg { color: #991b1b; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -170,17 +176,17 @@
   <form id="uploadForm">
     <div class="form-group">
       <label for="customerName">Full Name *</label>
-      <input type="text" id="customerName" required placeholder="Jane Smith">
+      <input type="text" id="customerName" required placeholder="Jane Smith" autocomplete="name">
     </div>
 
     <div class="form-group">
       <label for="customerEmail">Email Address * <span style="font-weight:400; color:#64748b;">(For payment link)</span></label>
-      <input type="email" id="customerEmail" required placeholder="jane@example.com">
+      <input type="email" id="customerEmail" required placeholder="jane@example.com" autocomplete="email">
     </div>
 
     <div class="form-group">
       <label for="phoneNumber">Phone Number *</label>
-      <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000">
+      <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000" autocomplete="tel">
     </div>
 
     <!-- Multi-Size Cart Builder Section -->
@@ -189,17 +195,18 @@
       
       <div class="form-group" style="margin-bottom:10px;">
         <label for="printSize">Select Print Size</label>
+        <!-- The value="" text must match the size names in Code.gs (CONFIG.PRICES) exactly. -->
         <select id="printSize">
           <option value="4x6 Standard">4x6 Standard Print ($1.00 each)</option>
           <option value="4x4 Square">4x4 Square Print ($1.00 each)</option>
-          <option value="2x2">2x2 Mini Squares ($2.00 each)</option>
-          <option value="2x3">Wallet Size Set ($2.00 each)</option>
+          <option value="2x2(4)">2x2 Mini Squares ($2.00 each)</option>
+          <option value="2x3(x)">Wallet Size Set ($2.00 each)</option>
         </select>
       </div>
 
       <div class="form-group" style="margin-bottom:10px;">
         <label for="photoBatchFiles">Choose Photos for this Size</label>
-        <input type="file" id="photoBatchFiles" multiple accept=".jpg,.jpeg,.png,.heic,.HEIC">
+        <input type="file" id="photoBatchFiles" multiple accept="image/*,.heic,.heif">
       </div>
 
       <button type="button" class="btn-secondary" onclick="addBatchToCart()">➕ Add Batch to Order Cart</button>
@@ -213,7 +220,7 @@
 
     <div class="form-group">
       <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#64748b;">(Free Delivery)</span></label>
-      <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP"></textarea>
+      <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP" autocomplete="street-address"></textarea>
     </div>
 
     <div class="form-group">
@@ -243,6 +250,11 @@
     </div>
   </div>
 
+  <div id="retryContainer">
+    <p class="success-msg" id="retryMsg"></p>
+    <button type="button" class="btn-submit" onclick="retryFailedUploads()">🔄 Retry Failed Photos</button>
+  </div>
+
   <div id="successContainer">
     <div class="success-icon">🎉</div>
     <h3>Order Submitted Successfully!</h3>
@@ -254,18 +266,53 @@
 </div>
 
 <script>
+  // ==========================================================================
+  // SETUP: paste your Google Apps Script Web App URL (the one ending in /exec)
+  // ==========================================================================
+  const API_URL = 'PASTE_YOUR_EXEC_URL_HERE';
+
+  // These names and prices must match CONFIG.PRICES in Code.gs. The server
+  // always recalculates the real price, so this is for display only.
   const SIZE_PRICES = {
     '4x6 Standard': 1.00,
     '4x4 Square': 1.00,
-    '2x2 Minis(4)': 2.00,
-    '2x3(2)' : 2.00
+    '2x2(4)': 2.00,
+    '2x3(x)': 2.00
   };
 
   const ORDER_MINIMUM = 15.00;
   const TAX_RATE = 0.09;
 
-  let cart = []; // Array of batch objects: { id, printSize, fileCount, files, price, subtotal }
+  let cart = []; // Array of batch objects: { id, printSize, fileCount, files, unitPrice, subtotal }
+  let currentOrder = null;   // { folderName, orderId } once the order is accepted
+  let failedUploads = [];    // photos that did not upload (kept so they can be retried)
 
+  // --------------------------------------------------------------------------
+  // Talking to the Google Apps Script backend
+  // --------------------------------------------------------------------------
+  // Sent as text/plain so the browser skips the "preflight" check that Apps Script cannot answer.
+  function callBackend(fn, args) {
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args })
+    }).then(function (resp) {
+      return resp.json();
+    }).then(function (r) {
+      if (r && r.success) return r;
+      const e = new Error((r && r.error) || 'Something went wrong. Please try again.');
+      e.fromServer = true;
+      throw e;
+    }, function () {
+      throw new Error('Connection problem. Check your signal and try again.');
+    });
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  // --------------------------------------------------------------------------
+  // Cart
+  // --------------------------------------------------------------------------
   function addBatchToCart() {
     const sizeSelect = document.getElementById('printSize');
     const fileInput = document.getElementById('photoBatchFiles');
@@ -348,6 +395,9 @@
     }
   }
 
+  // --------------------------------------------------------------------------
+  // Submit order
+  // --------------------------------------------------------------------------
   document.getElementById('uploadForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -365,6 +415,7 @@
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('uploadForm').style.display = 'none';
     document.getElementById('statusContainer').style.display = 'block';
+    document.getElementById('statusBox').innerText = 'Submitting your order...';
 
     // Prepare order data summary
     const cartItemsSummary = cart.map(item => ({
@@ -381,13 +432,9 @@
       cartItems: cartItemsSummary
     };
 
-    google.script.run
-      .withSuccessHandler(function(response) {
-        if (!response.success) {
-          alert('Error processing order: ' + response.error);
-          resetForm();
-          return;
-        }
+    callBackend('processNewOrder', [orderData])
+      .then(function(response) {
+        currentOrder = { folderName: response.folderName, orderId: response.orderId };
 
         // Flatten all files across cart items into a single queue for uploading
         let uploadQueue = [];
@@ -399,50 +446,106 @@
           });
         });
 
-        uploadFilesSequentially(response.folderName, uploadQueue, 0, response.orderId);
+        uploadFilesSequentially(uploadQueue);
       })
-      .withFailureHandler(function(err) {
-        alert('Server communication error: ' + err);
+      .catch(function(err) {
+        alert((err.fromServer ? 'Error processing order: ' : 'Server communication error: ') + err.message);
         resetForm();
-      })
-      .processNewOrder(orderData);
+      });
   });
 
-  function uploadFilesSequentially(folderName, queue, index, orderId) {
+  // --------------------------------------------------------------------------
+  // Photo preparation + upload
+  // --------------------------------------------------------------------------
+  function readAsDataURL(file) {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function (e) { resolve(e.target.result); };
+      reader.onerror = function () { reject(new Error('Could not read the photo.')); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Normal photos are sent exactly as they are. Very large phone photos (over
+  // ~6 MB or ~3600 px) are shrunk to a high-quality JPEG so uploads stay fast
+  // and under Cloudinary's file-size limit.
+  async function prepareImage(file) {
+    const MAX_SIDE = 3600, MAX_BYTES = 6 * 1024 * 1024;
+    if (window.createImageBitmap) {
+      try {
+        const bmp = await createImageBitmap(file);
+        const longSide = Math.max(bmp.width, bmp.height);
+        if (file.size <= MAX_BYTES && longSide <= MAX_SIDE) {
+          if (bmp.close) bmp.close();
+          return await readAsDataURL(file);
+        }
+        const scale = Math.min(1, MAX_SIDE / longSide);
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(bmp.width * scale));
+        cv.height = Math.max(1, Math.round(bmp.height * scale));
+        cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+        const url = cv.toDataURL('image/jpeg', 0.9);
+        cv.width = cv.height = 0;
+        if (bmp.close) bmp.close();
+        return url;
+      } catch (err) { /* browser can't decode it (e.g. some HEIC): send the original */ }
+    }
+    return readAsDataURL(file);
+  }
+
+  async function uploadOnePhoto(item) {
+    const dataUrl = await prepareImage(item.file);
+    const fileData = { name: item.file.name, prefix: item.prefix, base64: dataUrl };
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await callBackend('uploadPhotoToCloudinary', [currentOrder.folderName, fileData]);
+      } catch (err) {
+        lastErr = err;
+        await sleep(800 * (attempt + 1));
+      }
+    }
+    throw lastErr;
+  }
+
+  async function uploadFilesSequentially(queue) {
     const statusBox = document.getElementById('statusBox');
     const progressBar = document.getElementById('progressBar');
+    const failed = [];
 
-    if (index >= queue.length) {
-      document.getElementById('statusContainer').style.display = 'none';
-      document.getElementById('successContainer').style.display = 'block';
-      document.getElementById('refIdDisplay').innerText = orderId;
-      return;
+    document.getElementById('retryContainer').style.display = 'none';
+    document.getElementById('statusContainer').style.display = 'block';
+
+    for (let index = 0; index < queue.length; index++) {
+      const item = queue[index];
+      const progressPercent = Math.round((index / queue.length) * 100);
+      statusBox.innerText = `Uploading photo ${index + 1} of ${queue.length} (${item.file.name})...`;
+      progressBar.style.width = progressPercent + '%';
+      try {
+        await uploadOnePhoto(item);
+      } catch (err) {
+        failed.push(item);
+      }
     }
 
-    const item = queue[index];
-    const progressPercent = Math.round((index / queue.length) * 100);
-    statusBox.innerText = `Uploading photo ${index + 1} of ${queue.length} (${item.file.name})...`;
-    progressBar.style.width = progressPercent + '%';
+    progressBar.style.width = '100%';
+    document.getElementById('statusContainer').style.display = 'none';
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const fileData = {
-        name: item.file.name,
-        prefix: item.prefix,
-        base64: e.target.result
-      };
+    if (failed.length === 0) {
+      failedUploads = [];
+      document.getElementById('successContainer').style.display = 'block';
+      document.getElementById('refIdDisplay').innerText = currentOrder.orderId;
+    } else {
+      failedUploads = failed;
+      document.getElementById('retryMsg').innerText =
+        failed.length + ' of ' + queue.length + ' photo(s) did not upload. Your order ' +
+        currentOrder.orderId + ' is saved. Tap Retry to send the missing photos.';
+      document.getElementById('retryContainer').style.display = 'block';
+    }
+  }
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          uploadFilesSequentially(folderName, queue, index + 1, orderId);
-        })
-        .withFailureHandler(function(err) {
-          uploadFilesSequentially(folderName, queue, index + 1, orderId);
-        })
-        .uploadPhotoToCloudinary(folderName, fileData);
-    };
-
-    reader.readAsDataURL(item.file);
+  function retryFailedUploads() {
+    if (failedUploads.length) uploadFilesSequentially(failedUploads);
   }
 
   function resetForm() {
