@@ -7,7 +7,7 @@
   <title>Photo Print Order Portal</title>
   <style>
     :root {
-      --primary: #2563eb;
+      --primary: #3b5998;
       --primary-hover: #1d4ed8;
       --warning-bg: #fffbeb;
       --warning-border: #f59e0b;
@@ -164,7 +164,7 @@
 
 <div class="card">
   <h2>📸 Photo Print Order Portal</h2>
-  <p class="subtitle">Select sizes, add photos to your cart & checkout!</p>
+  <p class="subtitle">E-Pivot</p>
 
   <div class="notice-box">
     ⚠️ <strong>Crop Check:</strong> Ensure vital details fit your selected print aspect ratios. Free local delivery ($15.00 order minimum).
@@ -187,12 +187,7 @@
     </div>
 
     <div class="form-group">
-      <label for="customerEmail">Email Address * <span style="font-weight:400; color:#64748b;">(For payment link)</span></label>
-      <input type="email" id="customerEmail" required placeholder="jane@example.com" autocomplete="email">
-    </div>
-
-    <div class="form-group">
-      <label for="phoneNumber">Phone Number *</label>
+      <label for="phoneNumber">Phone Number * <span style="font-weight:400; color:#f7f4ef;">(10 digits. We text your payment link here)</span></label>
       <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000" autocomplete="tel">
     </div>
 
@@ -207,7 +202,7 @@
           <option value="4x6 Standard">4x6 Standard Print ($1.00 each)</option>
           <option value="4x4 Square">4x4 Square Print ($1.00 each)</option>
           <option value="2x2(4)">2x2 Mini Squares ($2.00 each)</option>
-          <option value="2x3(x)">Wallet Size Set ($2.00 each)</option>
+          <option value="2x3(2)">Wallet Size Set ($2.00 each)</option>
         </select>
       </div>
 
@@ -226,7 +221,7 @@
     </div>
 
     <div class="form-group">
-      <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#64748b;">(Free Delivery)</span></label>
+      <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#f7f4ef;">(Free Delivery)</span></label>
       <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP" autocomplete="street-address"></textarea>
     </div>
 
@@ -269,7 +264,7 @@
     <h3>Order Submitted Successfully!</h3>
     <p class="success-msg" id="successDetails">
       Your photos have been uploaded and your order reference is <strong id="refIdDisplay"></strong>. 
-      We are reviewing your print quality and crops. You will receive your secure Square payment link via email and text shortly!
+      We are reviewing your print quality and crops. You will receive your secure Square payment link by text message shortly!
     </p>
   </div>
 </div>
@@ -444,6 +439,13 @@
       return;
     }
 
+    let phoneDigits = document.getElementById('phoneNumber').value.replace(/\D/g, '');
+    if (phoneDigits.length === 11 && phoneDigits.charAt(0) === '1') phoneDigits = phoneDigits.slice(1);
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(phoneDigits)) {
+      alert('Please enter a valid 10-digit phone number, area code first.');
+      return;
+    }
+
     if (TURNSTILE_SITE_KEY && !turnstileToken) {
       alert('Please complete the security check first.');
       return;
@@ -462,7 +464,6 @@
 
     const orderData = {
       name: document.getElementById('customerName').value,
-      email: document.getElementById('customerEmail').value,
       phone: document.getElementById('phoneNumber').value,
       address: document.getElementById('deliveryAddress').value,
       instructions: document.getElementById('deliveryInstructions').value,
@@ -473,7 +474,7 @@
 
     callBackend('processNewOrder', [orderData])
       .then(function(response) {
-        currentOrder = { folderName: response.folderName, orderId: response.orderId };
+        currentOrder = { folderName: response.folderName, orderId: response.orderId, uploadToken: response.uploadToken };
 
         // Flatten all files across cart items into a single queue for uploading
         let uploadQueue = [];
@@ -538,7 +539,7 @@
     let lastErr;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        return await callBackend('uploadPhotoToCloudinary', [currentOrder.folderName, fileData]);
+        return await callBackend('uploadPhotoToCloudinary', [currentOrder.folderName, fileData, currentOrder.uploadToken]);
       } catch (err) {
         lastErr = err;
         await sleep(800 * (attempt + 1));
