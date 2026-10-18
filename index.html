@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://script.google.com https://*.googleusercontent.com; frame-src https://challenges.cloudflare.com; form-action 'none'; base-uri 'none'">
   <title>Photo Print Order Portal</title>
   <style>
     :root {
@@ -31,7 +32,7 @@
     }
 
     h2 { text-align: center; color: var(--text); margin-bottom: 6px; font-size: 1.4rem; }
-    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin-bottom: 20px; }
+    .subtitle { text-align: center; color: #f7f4ef; font-size: 0.88rem; margin-bottom: 20px; }
 
     .form-group { margin-bottom: 16px; }
     label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
@@ -174,6 +175,12 @@
   </div>
 
   <form id="uploadForm">
+    <!-- Trap field for bots: hidden from real visitors, leave it empty -->
+    <div style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;" aria-hidden="true">
+      <label for="website">Leave this field empty</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
     <div class="form-group">
       <label for="customerName">Full Name *</label>
       <input type="text" id="customerName" required placeholder="Jane Smith" autocomplete="name">
@@ -240,6 +247,8 @@
       <span class="estimate-price" id="estimateDisplay">$0.00</span>
     </div>
 
+    <div id="turnstileBox" style="margin-bottom:16px;"></div>
+
     <button type="submit" id="submitBtn" class="btn-submit" disabled>📥 Submit Order for Review</button>
   </form>
 
@@ -271,13 +280,18 @@
   // ==========================================================================
   const API_URL = 'PASTE_YOUR_EXEC_URL_HERE';
 
+  // OPTIONAL bot protection (Cloudflare Turnstile). Leave empty to keep it off.
+  // To turn it on, paste your Turnstile SITE key here and add the SECRET key to
+  // Apps Script as a script property named TURNSTILE_SECRET.
+  const TURNSTILE_SITE_KEY = '';
+
   // These names and prices must match CONFIG.PRICES in Code.gs. The server
   // always recalculates the real price, so this is for display only.
   const SIZE_PRICES = {
     '4x6 Standard': 1.00,
     '4x4 Square': 1.00,
     '2x2(4)': 2.00,
-    '2x3(x)': 2.00
+    '2x3(2)': 2.00
   };
 
   const ORDER_MINIMUM = 15.00;
@@ -286,6 +300,24 @@
   let cart = []; // Array of batch objects: { id, printSize, fileCount, files, unitPrice, subtotal }
   let currentOrder = null;   // { folderName, orderId } once the order is accepted
   let failedUploads = [];    // photos that did not upload (kept so they can be retried)
+  let turnstileToken = '';   // filled in by the optional security check
+
+  function initTurnstile() {
+    if (!TURNSTILE_SITE_KEY) return;
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = function () {
+      turnstile.render('#turnstileBox', {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: function (t) { turnstileToken = t; },
+        'expired-callback': function () { turnstileToken = ''; },
+        'error-callback': function () { turnstileToken = ''; }
+      });
+    };
+    document.head.appendChild(s);
+  }
+  initTurnstile();
 
   // --------------------------------------------------------------------------
   // Talking to the Google Apps Script backend
@@ -412,6 +444,11 @@
       return;
     }
 
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      alert('Please complete the security check first.');
+      return;
+    }
+
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('uploadForm').style.display = 'none';
     document.getElementById('statusContainer').style.display = 'block';
@@ -429,7 +466,9 @@
       phone: document.getElementById('phoneNumber').value,
       address: document.getElementById('deliveryAddress').value,
       instructions: document.getElementById('deliveryInstructions').value,
-      cartItems: cartItemsSummary
+      cartItems: cartItemsSummary,
+      website: document.getElementById('website').value,
+      turnstileToken: turnstileToken
     };
 
     callBackend('processNewOrder', [orderData])
@@ -552,6 +591,7 @@
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('uploadForm').style.display = 'block';
     document.getElementById('statusContainer').style.display = 'none';
+    if (TURNSTILE_SITE_KEY && window.turnstile) { turnstile.reset(); turnstileToken = ''; }
     renderCart();
   }
 </script>
