@@ -268,6 +268,16 @@
       <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000" autocomplete="tel">
     </div>
 
+    <div class="form-group">
+      <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#f7f4ef;">(Free Delivery)</span></label>
+      <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP" autocomplete="street-address"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="deliveryInstructions">Delivery Instructions (Optional)</label>
+      <textarea id="deliveryInstructions" placeholder="Gate code #1234, leave package on porch..."></textarea>
+    </div>
+
     <!-- Photo picker -->
     <div class="builder-box">
       <div class="builder-title">➕ Add Your Photos</div>
@@ -291,16 +301,6 @@
     <div class="cart-container" id="cartContainer">
       <div class="cart-header">🛒 Order Summary</div>
       <div id="cartList"></div>
-    </div>
-
-    <div class="form-group">
-      <label for="deliveryAddress">Delivery Address * <span style="font-weight:400; color:#f7f4ef;">(Free Delivery)</span></label>
-      <textarea id="deliveryAddress" required placeholder="123 Main St, Apt 4B, City, State, ZIP" autocomplete="street-address"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label for="deliveryInstructions">Delivery Instructions (Optional)</label>
-      <textarea id="deliveryInstructions" placeholder="Gate code #1234, leave package on porch..."></textarea>
     </div>
 
     <div class="checkbox-group">
@@ -385,7 +385,7 @@
   const MAX_QTY = 99;
   const MAX_SIDE = 3600;      // longest side of the cropped file we upload
   const PROXY_SIDE = 800;     // size of the small copy used for previews
-  const MIN_DPI = 300;        // below this we warn that a print may look soft
+  const MIN_DPI = 150;        // below this we warn that a print may look soft
 
   let photos = [];            // { id, file, proxyUrl, w, h, size, qty, orient, zoom, nx, ny, broken, thumb }
   let photoCounter = 0;
