@@ -20,7 +20,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
-    
+
     .card {
       background: #9b5143;
       width: 100%;
@@ -48,7 +48,7 @@
     input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
     textarea { resize: vertical; min-height: 60px; }
 
-    /* Builder Box */
+    /* Photo picker box */
     .builder-box {
       background-color: #f8fafc;
       border: 1px dashed var(--primary);
@@ -56,23 +56,70 @@
       border-radius: 8px;
       margin-bottom: 18px;
     }
-    .builder-title { font-weight: 700; font-size: 0.9rem; color: var(--primary); margin-bottom: 12px; }
-
+    .builder-title { font-weight: 700; font-size: 0.9rem; color: var(--primary); margin-bottom: 4px; }
+    .builder-help { font-size: 0.8rem; color: #475569; margin-bottom: 12px; line-height: 1.4; }
+    .default-row { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
+    .default-row select { flex: 1; min-width: 0; }
     .btn-secondary {
       background: #e2e8f0;
       color: #1e293b;
       border: none;
-      padding: 12px 14px;
-      font-size: 0.88rem;
+      padding: 10px 12px;
+      font-size: 0.85rem;
       font-weight: 600;
       border-radius: 6px;
-      width: 100%;
       cursor: pointer;
-      margin-top: 8px;
     }
     .btn-secondary:hover { background: #cbd5e1; }
+    #prepStatus { display: none; font-size: 0.82rem; color: #334155; margin-top: 10px; }
 
-    /* Cart Summary List */
+    /* Photo list */
+    #photoList { margin-bottom: 18px; }
+    .photo-empty { background: rgba(255,255,255,0.12); color: #f7f4ef; border-radius: 8px; padding: 14px; font-size: 0.85rem; text-align: center; }
+    .photo-row {
+      display: flex;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .thumb {
+      flex: 0 0 88px;
+      width: 88px;
+      height: 88px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #e2e8f0;
+      padding: 0;
+      cursor: pointer;
+    }
+    .thumb canvas { width: 100%; height: 100%; display: block; }
+    .info { flex: 1; min-width: 0; }
+    .ph-name { font-size: 0.78rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .ph-size { padding: 8px 10px; font-size: 16px; margin-bottom: 8px; }
+    .qty-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .qty-label { font-size: 0.8rem; font-weight: 600; }
+    .qty-btn {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .qty-val { min-width: 24px; text-align: center; font-weight: 700; font-size: 0.95rem; }
+    .ph-price { margin-left: auto; font-size: 0.85rem; font-weight: 600; color: var(--primary); }
+    .ph-note { font-size: 0.76rem; color: #92400e; margin-top: 6px; line-height: 1.35; }
+    .ph-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+    .btn-link { background: none; border: none; color: var(--primary); font-weight: 600; font-size: 0.82rem; cursor: pointer; padding: 8px 0; }
+    .btn-remove { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; padding: 8px; }
+
+    /* Order summary */
     .cart-container {
       margin-bottom: 18px;
       background: #fff;
@@ -84,7 +131,6 @@
     .cart-header { background: #f1f5f9; padding: 10px 14px; font-weight: 600; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
     .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; }
     .cart-item:last-child { border-bottom: none; }
-    .btn-remove { color: #ef4444; background: none; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; margin-left: 10px; padding: 8px; }
 
     .notice-box {
       background-color: var(--warning-bg);
@@ -155,9 +201,40 @@
     .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
     .success-msg { font-size: 0.9rem; color: #475569; line-height: 1.5; margin-top: 8px; }
 
-    /* Shown if some photos could not be uploaded */
     #retryContainer { display: none; margin-top: 20px; text-align: center; }
     #retryContainer .success-msg { color: #991b1b; margin-bottom: 12px; }
+
+    /* Crop editor */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.78);
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .modal[hidden] { display: none; }
+    .modal-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .modal-card h3 { font-size: 1.05rem; margin-bottom: 2px; }
+    .crop-sub { font-size: 0.82rem; color: #64748b; margin-bottom: 10px; }
+    #cropCanvas { touch-action: none; border-radius: 4px; background: #e2e8f0; cursor: grab; max-width: 100%; }
+    .crop-hint { font-size: 0.76rem; color: #64748b; margin: 8px 0 4px; text-align: center; }
+    #zoomRange { width: 100%; padding: 0; margin: 4px 0 10px; }
+    .modal-actions { display: flex; gap: 8px; width: 100%; margin-top: 6px; }
+    .modal-actions button { flex: 1; }
+    .btn-primary-sm { background: var(--primary); color: #fff; border: none; padding: 12px; font-size: 0.92rem; font-weight: 600; border-radius: 6px; cursor: pointer; }
+    .btn-primary-sm:hover { background: var(--primary-hover); }
+    .modal-actions .btn-secondary { padding: 12px; }
   </style>
 </head>
 <body>
@@ -167,11 +244,11 @@
   <p class="subtitle">E-Pivot</p>
 
   <div class="notice-box">
-    ⚠️ <strong>Crop Check:</strong> Ensure vital details fit your selected print aspect ratios. Free local delivery ($15.00 order minimum).
+    ⚠️ <strong>Crop Check:</strong> Each photo is cropped to fill its print size. Tap a photo to move and zoom the crop. Free local delivery ($15.00 order minimum).
   </div>
 
   <div class="error-notice" id="minOrderWarning">
-    ⚠️ <strong>Order Minimum:</strong> A $15.00 subtotal minimum is required. Please add more items to your cart.
+    ⚠️ <strong>Order Minimum:</strong> A $15.00 subtotal minimum is required. Please add more prints to your order.
   </div>
 
   <form id="uploadForm">
@@ -191,32 +268,28 @@
       <input type="tel" id="phoneNumber" required placeholder="(555) 000-0000" autocomplete="tel">
     </div>
 
-    <!-- Multi-Size Cart Builder Section -->
+    <!-- Photo picker -->
     <div class="builder-box">
-      <div class="builder-title">➕ Add Photo Size Batch</div>
-      
-      <div class="form-group" style="margin-bottom:10px;">
-        <label for="printSize">Select Print Size</label>
-        <!-- The value="" text must match the size names in Code.gs (CONFIG.PRICES) exactly. -->
-        <select id="printSize">
-          <option value="4x6 Standard">4x6 Standard Print ($1.00 each)</option>
-          <option value="4x4 Square">4x4 Square Print ($1.00 each)</option>
-          <option value="2x2(4)">2x2(4) ($2.00 each)</option>
-          <option value="2x3(2)">2x3(2) ($2.00 each)</option>
-        </select>
-      </div>
+      <div class="builder-title">➕ Add Your Photos</div>
+      <p class="builder-help">Choose as many photos as you like. Then set the size, quantity and crop for each one below.</p>
 
-      <div class="form-group" style="margin-bottom:10px;">
-        <label for="photoBatchFiles">Choose Photos for this Size</label>
-        <input type="file" id="photoBatchFiles" multiple accept="image/*,.heic,.heif">
-      </div>
+      <label for="photoFiles" style="font-weight:600;">Choose Photos</label>
+      <input type="file" id="photoFiles" multiple accept="image/*,.heic,.heif">
 
-      <button type="button" class="btn-secondary" onclick="addBatchToCart()">➕ Add Batch to Order Cart</button>
+      <div class="default-row">
+        <select id="defaultSize" aria-label="Size for newly added photos"></select>
+        <button type="button" class="btn-secondary" id="applyAllBtn">Apply to all</button>
+      </div>
+      <p class="builder-help" style="margin:6px 0 0;">New photos start at the size above. "Apply to all" changes every photo already added.</p>
+      <div id="prepStatus"></div>
     </div>
 
-    <!-- Active Cart List -->
+    <!-- One row per photo -->
+    <div id="photoList"></div>
+
+    <!-- Order summary -->
     <div class="cart-container" id="cartContainer">
-      <div class="cart-header">🛒 Order Cart Summary</div>
+      <div class="cart-header">🛒 Order Summary</div>
       <div id="cartList"></div>
     </div>
 
@@ -263,9 +336,28 @@
     <div class="success-icon">🎉</div>
     <h3>Order Submitted Successfully!</h3>
     <p class="success-msg" id="successDetails">
-      Your photos have been uploaded and your order reference is <strong id="refIdDisplay"></strong>. 
+      Your photos have been uploaded and your order reference is <strong id="refIdDisplay"></strong>.
       We are reviewing your print quality and crops. You will receive your secure Square payment link by text message shortly!
     </p>
+  </div>
+</div>
+
+<!-- Crop editor -->
+<div class="modal" id="cropModal" hidden role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+  <div class="modal-card">
+    <h3 id="cropTitle">Adjust crop</h3>
+    <div class="crop-sub" id="cropInfo"></div>
+    <canvas id="cropCanvas"></canvas>
+    <div class="crop-hint">Drag to move the photo. Pinch, scroll or use the slider to zoom.</div>
+    <input type="range" id="zoomRange" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="rotateBtn">↻ Switch to portrait</button>
+      <button type="button" class="btn-secondary" id="resetCropBtn">Reset</button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="cropCancelBtn">Cancel</button>
+      <button type="button" class="btn-primary-sm" id="cropDoneBtn">Save crop</button>
+    </div>
   </div>
 </div>
 
@@ -276,26 +368,30 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbwfwGr1CdL4VZH1122QxBxxPLqFLNkd5Jd2zdDJF9KwbfpKnX4bmjmXuY17s6mtqZHv/exec';
 
   // OPTIONAL bot protection (Cloudflare Turnstile). Leave empty to keep it off.
-  // To turn it on, paste your Turnstile SITE key here and add the SECRET key to
-  // Apps Script as a script property named TURNSTILE_SECRET.
   const TURNSTILE_SITE_KEY = '';
 
-  // These names and prices must match CONFIG.PRICES in Code.gs. The server
-  // always recalculates the real price, so this is for display only.
-  const SIZE_PRICES = {
-    '4x6 Standard': 1.00,
-    '4x4 Square': 1.00,
-    '2x2(4)': 2.00,
-    '2x3(2)': 2.00
+  // The keys must match the size names in CONFIG.PRICES in Code.gs exactly.
+  // The server always recalculates the real price, so prices here are for display.
+  // w:h is the portrait shape of the print; inW/inH are inches (used for the low-resolution warning).
+  const SIZES = {
+    '4x6 Standard': { label: '4x6 Standard Print', price: 1.00, w: 2, h: 3, inW: 4, inH: 6 },
+    '4x4 Square':   { label: '4x4 Square Print',   price: 1.00, w: 1, h: 1, inW: 4, inH: 4 },
+    '2x2(4)':       { label: '2x2(4)',             price: 2.00, w: 1, h: 1, inW: 2, inH: 2 },
+    '2x3(2)':       { label: '2x3(2)',             price: 2.00, w: 2, h: 3, inW: 2, inH: 3 }
   };
 
   const ORDER_MINIMUM = 15.00;
   const TAX_RATE = 0.09;
+  const MAX_QTY = 99;
+  const MAX_SIDE = 3600;      // longest side of the cropped file we upload
+  const PROXY_SIDE = 800;     // size of the small copy used for previews
+  const MIN_DPI = 150;        // below this we warn that a print may look soft
 
-  let cart = []; // Array of batch objects: { id, printSize, fileCount, files, unitPrice, subtotal }
-  let currentOrder = null;   // { folderName, orderId } once the order is accepted
-  let failedUploads = [];    // photos that did not upload (kept so they can be retried)
-  let turnstileToken = '';   // filled in by the optional security check
+  let photos = [];            // { id, file, proxyUrl, w, h, size, qty, orient, zoom, nx, ny, broken, thumb }
+  let photoCounter = 0;
+  let currentOrder = null;
+  let failedUploads = [];
+  let turnstileToken = '';
 
   function initTurnstile() {
     if (!TURNSTILE_SITE_KEY) return;
@@ -317,7 +413,6 @@
   // --------------------------------------------------------------------------
   // Talking to the Google Apps Script backend
   // --------------------------------------------------------------------------
-  // Sent as text/plain so the browser skips the "preflight" check that Apps Script cannot answer.
   function callBackend(fn, args) {
     return fetch(API_URL, {
       method: 'POST',
@@ -336,51 +431,258 @@
   }
 
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function money(n) { return '$' + n.toFixed(2); }
 
-  // --------------------------------------------------------------------------
-  // Cart
-  // --------------------------------------------------------------------------
-  function addBatchToCart() {
-    const sizeSelect = document.getElementById('printSize');
-    const fileInput = document.getElementById('photoBatchFiles');
-    const files = fileInput.files;
-
-    if (!files || files.length === 0) {
-      alert('Please select at least one photo file for this size.');
-      return;
-    }
-
-    const printSize = sizeSelect.value;
-    const unitPrice = SIZE_PRICES[printSize] || 1.00;
-    const fileCount = files.length;
-    const subtotal = fileCount * unitPrice;
-
-    cart.push({
-      id: 'batch_' + Date.now(),
-      printSize: printSize,
-      fileCount: fileCount,
-      files: Array.from(files),
-      unitPrice: unitPrice,
-      subtotal: subtotal
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      const img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('Could not open the photo.')); };
+      img.src = src;
     });
-
-    // Reset file input for next batch
-    fileInput.value = '';
-    renderCart();
   }
 
-  function removeBatch(batchId) {
-    cart = cart.filter(item => item.id !== batchId);
-    renderCart();
+  // --------------------------------------------------------------------------
+  // Crop math. A crop is { size, orient, zoom, nx, ny }: nx/ny are the crop
+  // center as a fraction (0 to 1) of the image, so the same crop works on the
+  // small preview copy and on the full-size original.
+  // --------------------------------------------------------------------------
+  function aspectOf(c) {
+    const s = SIZES[c.size];
+    const portrait = s.w / s.h;
+    if (portrait === 1) return 1;
+    return c.orient === 'L' ? 1 / portrait : portrait;
   }
 
-  function renderCart() {
+  function cropRect(c, W, H) {
+    const a = aspectOf(c);
+    let cw, ch;
+    if (W / H > a) { ch = H; cw = H * a; } else { cw = W; ch = W / a; }
+    cw /= c.zoom; ch /= c.zoom;
+    const cx = clamp(c.nx * W, cw / 2, W - cw / 2);
+    const cy = clamp(c.ny * H, ch / 2, H - ch / 2);
+    return { x: cx - cw / 2, y: cy - ch / 2, w: cw, h: ch };
+  }
+
+  // --------------------------------------------------------------------------
+  // Adding photos
+  // --------------------------------------------------------------------------
+  const defaultSizeSelect = document.getElementById('defaultSize');
+  const sizeOptionsHtml = Object.keys(SIZES).map(function (k) {
+    return '<option value="' + k + '">' + SIZES[k].label + ' (' + money(SIZES[k].price) + ' each)</option>';
+  }).join('');
+  defaultSizeSelect.innerHTML = sizeOptionsHtml;
+
+  document.getElementById('photoFiles').addEventListener('change', function (e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length) addFiles(files);
+  });
+
+  document.getElementById('applyAllBtn').addEventListener('click', function () {
+    if (!photos.length) return;
+    const size = defaultSizeSelect.value;
+    photos.forEach(function (p) { setPhotoSize(p, size); });
+    renderPhotos();
+  });
+
+  async function addFiles(files) {
+    const status = document.getElementById('prepStatus');
+    status.style.display = 'block';
+    for (let i = 0; i < files.length; i++) {
+      status.innerText = 'Preparing photo ' + (i + 1) + ' of ' + files.length + '...';
+      photos.push(await makePhoto(files[i]));
+      renderPhotos();
+    }
+    status.style.display = 'none';
+  }
+
+  async function makePhoto(file) {
+    const p = {
+      id: 'p' + (++photoCounter),
+      file: file,
+      proxyUrl: '',
+      w: 0, h: 0,
+      size: defaultSizeSelect.value,
+      qty: 1,
+      orient: 'L',
+      zoom: 1, nx: 0.5, ny: 0.5,
+      broken: false,
+      thumb: document.createElement('canvas')
+    };
+    p.thumb.width = 192; p.thumb.height = 192;
+    let tmpUrl = '';
+    try {
+      tmpUrl = URL.createObjectURL(file);
+      const img = await loadImage(tmpUrl);
+      p.w = img.naturalWidth; p.h = img.naturalHeight;
+      p.orient = p.w >= p.h ? 'L' : 'P';
+      const scale = Math.min(1, PROXY_SIDE / Math.max(p.w, p.h));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(p.w * scale));
+      cv.height = Math.max(1, Math.round(p.h * scale));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      const blob = await new Promise(function (res) { cv.toBlob(res, 'image/jpeg', 0.85); });
+      if (!blob) throw new Error('no preview');
+      p.proxyUrl = URL.createObjectURL(blob);
+      drawThumb(p, cv);
+    } catch (err) {
+      p.broken = true;   // the browser can't open this file type (some HEIC); it is uploaded as-is
+      drawBrokenThumb(p);
+    } finally {
+      if (tmpUrl) URL.revokeObjectURL(tmpUrl);
+    }
+    return p;
+  }
+
+  function drawThumb(p, src) {
+    const S = 192, ctx = p.thumb.getContext('2d');
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, S, S);
+    const W = src.naturalWidth || src.width, H = src.naturalHeight || src.height;
+    const r = cropRect(p, W, H);
+    const a = r.w / r.h;
+    let dw, dh;
+    if (a >= 1) { dw = S; dh = S / a; } else { dh = S; dw = S * a; }
+    ctx.drawImage(src, r.x, r.y, r.w, r.h, (S - dw) / 2, (S - dh) / 2, dw, dh);
+  }
+
+  function drawBrokenThumb(p) {
+    const ctx = p.thumb.getContext('2d');
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, 192, 192);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No preview', 96, 102);
+  }
+
+  async function redrawThumb(p) {
+    if (p.broken) return;
+    try { drawThumb(p, await loadImage(p.proxyUrl)); } catch (err) { /* keep old thumbnail */ }
+  }
+
+  function setPhotoSize(p, size) {
+    p.size = size;
+    p.zoom = 1; p.nx = 0.5; p.ny = 0.5;
+    redrawThumb(p);
+  }
+
+  // --------------------------------------------------------------------------
+  // Photo list
+  // --------------------------------------------------------------------------
+  const photoList = document.getElementById('photoList');
+
+  function findPhoto(id) { return photos.find(function (p) { return p.id === id; }); }
+
+  function renderPhotos() {
+    photoList.innerHTML = '';
+    if (!photos.length) {
+      const empty = document.createElement('div');
+      empty.className = 'photo-empty';
+      empty.textContent = 'No photos yet. Choose photos above to start your order.';
+      photoList.appendChild(empty);
+    }
+    photos.forEach(function (p) {
+      const row = document.createElement('div');
+      row.className = 'photo-row';
+      row.dataset.id = p.id;
+      row.innerHTML =
+        '<button type="button" class="thumb" data-act="crop" aria-label="Adjust crop"></button>' +
+        '<div class="info">' +
+          '<div class="ph-name"></div>' +
+          '<select class="ph-size" aria-label="Print size">' + sizeOptionsHtml + '</select>' +
+          '<div class="qty-row">' +
+            '<span class="qty-label">Qty</span>' +
+            '<button type="button" class="qty-btn" data-act="minus" aria-label="Fewer prints">−</button>' +
+            '<span class="qty-val"></span>' +
+            '<button type="button" class="qty-btn" data-act="plus" aria-label="More prints">+</button>' +
+            '<span class="ph-price"></span>' +
+          '</div>' +
+          '<div class="ph-note"></div>' +
+          '<div class="ph-actions">' +
+            '<button type="button" class="btn-link" data-act="crop">✂️ Adjust crop</button>' +
+            '<button type="button" class="btn-remove" data-act="remove">Remove</button>' +
+          '</div>' +
+        '</div>';
+      row.querySelector('.thumb').appendChild(p.thumb);
+      row.querySelector('.ph-name').textContent = p.file.name;
+      if (p.broken) row.querySelector('[data-act="crop"].btn-link').style.display = 'none';
+      photoList.appendChild(row);
+      refreshRow(p);
+    });
+    renderSummary();
+  }
+
+  function lowResWarning(p) {
+    if (p.broken) return 'This file type can\'t be previewed here, so it will be sent as-is and cropped to fit when printed.';
+    const r = cropRect(p, p.w, p.h);
+    const s = SIZES[p.size];
+    const dpi = Math.min(r.w, r.h) / Math.min(s.inW, s.inH);
+    if (dpi < MIN_DPI) return '⚠️ Low resolution for this size. It may print soft.';
+    return '';
+  }
+
+  function refreshRow(p) {
+    const row = photoList.querySelector('.photo-row[data-id="' + p.id + '"]');
+    if (!row) return;
+    row.querySelector('.ph-size').value = p.size;
+    row.querySelector('.qty-val').textContent = p.qty;
+    const unit = SIZES[p.size].price;
+    row.querySelector('.ph-price').textContent = p.qty + ' × ' + money(unit) + ' = ' + money(p.qty * unit);
+    row.querySelector('.ph-note').textContent = lowResWarning(p);
+  }
+
+  photoList.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const row = btn.closest('.photo-row');
+    const p = row && findPhoto(row.dataset.id);
+    if (!p) return;
+    const act = btn.dataset.act;
+    if (act === 'plus') { p.qty = Math.min(MAX_QTY, p.qty + 1); refreshRow(p); renderSummary(); }
+    else if (act === 'minus') { p.qty = Math.max(1, p.qty - 1); refreshRow(p); renderSummary(); }
+    else if (act === 'remove') {
+      if (p.proxyUrl) URL.revokeObjectURL(p.proxyUrl);
+      photos = photos.filter(function (x) { return x.id !== p.id; });
+      renderPhotos();
+    }
+    else if (act === 'crop') { openCrop(p); }
+  });
+
+  photoList.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('ph-size')) return;
+    const row = e.target.closest('.photo-row');
+    const p = row && findPhoto(row.dataset.id);
+    if (!p) return;
+    setPhotoSize(p, e.target.value);
+    refreshRow(p);
+    renderSummary();
+  });
+
+  // --------------------------------------------------------------------------
+  // Totals
+  // --------------------------------------------------------------------------
+  function computeTotals() {
+    const bySize = {};
+    let subtotal = 0, prints = 0;
+    photos.forEach(function (p) {
+      bySize[p.size] = (bySize[p.size] || 0) + p.qty;
+      subtotal += p.qty * SIZES[p.size].price;
+      prints += p.qty;
+    });
+    return { bySize: bySize, subtotal: subtotal, prints: prints };
+  }
+
+  function renderSummary() {
+    const t = computeTotals();
     const cartContainer = document.getElementById('cartContainer');
     const cartList = document.getElementById('cartList');
     const submitBtn = document.getElementById('submitBtn');
     const minWarning = document.getElementById('minOrderWarning');
 
-    if (cart.length === 0) {
+    if (!photos.length) {
       cartContainer.style.display = 'none';
       cartList.innerHTML = '';
       document.getElementById('estimateDisplay').innerText = '$0.00';
@@ -390,30 +692,16 @@
     }
 
     cartContainer.style.display = 'block';
-    let html = '';
-    let grandSubtotal = 0;
+    cartList.innerHTML = Object.keys(t.bySize).map(function (k) {
+      const n = t.bySize[k];
+      return '<div class="cart-item"><div><strong>' + n + 'x ' + k + '</strong>' +
+        '<div style="font-size:0.78rem; color:#64748b;">' + money(SIZES[k].price) + ' each = ' + money(n * SIZES[k].price) + '</div></div></div>';
+    }).join('');
 
-    cart.forEach(item => {
-      grandSubtotal += item.subtotal;
-      html += `
-        <div class="cart-item">
-          <div>
-            <strong>${item.fileCount}x ${item.printSize}</strong>
-            <div style="font-size:0.78rem; color:#64748b;">$${item.unitPrice.toFixed(2)} each = $${item.subtotal.toFixed(2)}</div>
-          </div>
-          <button type="button" class="btn-remove" onclick="removeBatch('${item.id}')">Remove</button>
-        </div>
-      `;
-    });
+    const total = t.subtotal + t.subtotal * TAX_RATE;
+    document.getElementById('estimateDisplay').innerText = money(total);
 
-    cartList.innerHTML = html;
-
-    const tax = grandSubtotal * TAX_RATE;
-    const total = grandSubtotal + tax;
-
-    document.getElementById('estimateDisplay').innerText = '$' + total.toFixed(2);
-
-    if (grandSubtotal < ORDER_MINIMUM) {
+    if (t.subtotal < ORDER_MINIMUM) {
       submitBtn.disabled = true;
       minWarning.style.display = 'block';
     } else {
@@ -423,18 +711,176 @@
   }
 
   // --------------------------------------------------------------------------
+  // Crop editor
+  // --------------------------------------------------------------------------
+  const cropModal = document.getElementById('cropModal');
+  const cropCanvas = document.getElementById('cropCanvas');
+  const zoomRange = document.getElementById('zoomRange');
+  const rotateBtn = document.getElementById('rotateBtn');
+  let edit = null;      // working copy of the crop being edited
+  let editPhoto = null;
+  let cropImg = null;   // small preview copy of the photo
+  let cropCssW = 0, cropCssH = 0;
+
+  async function openCrop(p) {
+    if (p.broken) return;
+    editPhoto = p;
+    edit = { size: p.size, orient: p.orient, zoom: p.zoom, nx: p.nx, ny: p.ny };
+    cropImg = null;
+    cropModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    try {
+      cropImg = await loadImage(p.proxyUrl);
+    } catch (err) {
+      closeCrop();
+      return;
+    }
+    syncCropUI();
+  }
+
+  function closeCrop() {
+    cropModal.hidden = true;
+    document.body.style.overflow = '';
+    edit = null; editPhoto = null; cropImg = null;
+  }
+
+  function syncCropUI() {
+    const s = SIZES[edit.size];
+    const square = s.w === s.h;
+    rotateBtn.style.display = square ? 'none' : '';
+    rotateBtn.textContent = edit.orient === 'L' ? '↻ Switch to portrait' : '↻ Switch to landscape';
+    document.getElementById('cropInfo').textContent =
+      s.label + (square ? '' : (edit.orient === 'L' ? ' · Landscape' : ' · Portrait'));
+    zoomRange.value = edit.zoom;
+    layoutCanvas();
+  }
+
+  function layoutCanvas() {
+    const a = aspectOf(edit);
+    const maxW = Math.min(window.innerWidth * 0.8, 440);
+    const maxH = window.innerHeight * 0.45;
+    cropCssW = Math.min(maxW, maxH * a);
+    cropCssH = cropCssW / a;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cropCanvas.style.width = cropCssW + 'px';
+    cropCanvas.style.height = cropCssH + 'px';
+    cropCanvas.width = Math.round(cropCssW * dpr);
+    cropCanvas.height = Math.round(cropCssH * dpr);
+    drawCrop();
+  }
+
+  function normalizeEdit() {
+    const W = cropImg.naturalWidth, H = cropImg.naturalHeight;
+    const r = cropRect(edit, W, H);
+    edit.nx = (r.x + r.w / 2) / W;
+    edit.ny = (r.y + r.h / 2) / H;
+  }
+
+  function drawCrop() {
+    if (!cropImg || !edit) return;
+    const W = cropImg.naturalWidth, H = cropImg.naturalHeight;
+    const r = cropRect(edit, W, H);
+    const ctx = cropCanvas.getContext('2d');
+    const cw = cropCanvas.width, ch = cropCanvas.height;
+    ctx.drawImage(cropImg, r.x, r.y, r.w, r.h, 0, 0, cw, ch);
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 1; i < 3; i++) {
+      ctx.moveTo(cw * i / 3, 0); ctx.lineTo(cw * i / 3, ch);
+      ctx.moveTo(0, ch * i / 3); ctx.lineTo(cw, ch * i / 3);
+    }
+    ctx.stroke();
+  }
+
+  function setZoom(z) {
+    if (!cropImg) return;
+    edit.zoom = clamp(z, 1, 4);
+    zoomRange.value = edit.zoom;
+    normalizeEdit();
+    drawCrop();
+  }
+
+  function panBy(dx, dy) {
+    const W = cropImg.naturalWidth, H = cropImg.naturalHeight;
+    const r = cropRect(edit, W, H);
+    edit.nx -= (dx / cropCssW * r.w) / W;
+    edit.ny -= (dy / cropCssH * r.h) / H;
+    normalizeEdit();
+    drawCrop();
+  }
+
+  const pointers = new Map();
+  let lastDist = 0;
+  function pointerDist() {
+    const pts = Array.from(pointers.values());
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  }
+
+  cropCanvas.addEventListener('pointerdown', function (e) {
+    cropCanvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) lastDist = pointerDist();
+  });
+  cropCanvas.addEventListener('pointermove', function (e) {
+    if (!cropImg || !pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      panBy(e.clientX - prev.x, e.clientY - prev.y);
+    } else if (pointers.size === 2) {
+      const d = pointerDist();
+      if (lastDist > 0) setZoom(edit.zoom * d / lastDist);
+      lastDist = d;
+    }
+  });
+  function endPointer(e) { pointers.delete(e.pointerId); lastDist = 0; }
+  cropCanvas.addEventListener('pointerup', endPointer);
+  cropCanvas.addEventListener('pointercancel', endPointer);
+  cropCanvas.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    if (cropImg) setZoom(edit.zoom * Math.exp(-e.deltaY * 0.002));
+  }, { passive: false });
+
+  zoomRange.addEventListener('input', function () { setZoom(parseFloat(zoomRange.value)); });
+
+  rotateBtn.addEventListener('click', function () {
+    edit.orient = edit.orient === 'L' ? 'P' : 'L';
+    edit.zoom = 1; edit.nx = 0.5; edit.ny = 0.5;
+    syncCropUI();
+  });
+  document.getElementById('resetCropBtn').addEventListener('click', function () {
+    edit.zoom = 1; edit.nx = 0.5; edit.ny = 0.5;
+    syncCropUI();
+  });
+  document.getElementById('cropCancelBtn').addEventListener('click', closeCrop);
+  document.getElementById('cropDoneBtn').addEventListener('click', function () {
+    if (editPhoto && edit && cropImg) {
+      editPhoto.orient = edit.orient;
+      editPhoto.zoom = edit.zoom;
+      editPhoto.nx = edit.nx;
+      editPhoto.ny = edit.ny;
+      drawThumb(editPhoto, cropImg);
+      refreshRow(editPhoto);
+    }
+    closeCrop();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !cropModal.hidden) closeCrop(); });
+  window.addEventListener('resize', function () { if (!cropModal.hidden && edit && cropImg) layoutCanvas(); });
+
+  // --------------------------------------------------------------------------
   // Submit order
   // --------------------------------------------------------------------------
-  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  document.getElementById('uploadForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
-    if (cart.length === 0) {
-      alert('Your cart is empty. Please add photos to your cart first.');
+    if (!photos.length) {
+      alert('Your order is empty. Please add photos first.');
       return;
     }
 
-    let grandSubtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    if (grandSubtotal < ORDER_MINIMUM) {
+    const totals = computeTotals();
+    if (totals.subtotal < ORDER_MINIMUM) {
       alert('Order subtotal must be at least $15.00.');
       return;
     }
@@ -456,11 +902,11 @@
     document.getElementById('statusContainer').style.display = 'block';
     document.getElementById('statusBox').innerText = 'Submitting your order...';
 
-    // Prepare order data summary
-    const cartItemsSummary = cart.map(item => ({
-      printSize: item.printSize,
-      fileCount: item.fileCount
-    }));
+    // One line per size. fileCount is the number of PRINTS of that size
+    // (each photo's quantity added up), which is what the price is based on.
+    const cartItemsSummary = Object.keys(totals.bySize).map(function (k) {
+      return { printSize: k, fileCount: totals.bySize[k] };
+    });
 
     const orderData = {
       name: document.getElementById('customerName').value,
@@ -473,22 +919,12 @@
     };
 
     callBackend('processNewOrder', [orderData])
-      .then(function(response) {
+      .then(function (response) {
         currentOrder = { folderName: response.folderName, orderId: response.orderId, uploadToken: response.uploadToken };
-
-        // Flatten all files across cart items into a single queue for uploading
-        let uploadQueue = [];
-        cart.forEach(item => {
-          // Clean size tag for Cloudinary prefix (e.g. "4x6_Standard")
-          const cleanSizeTag = item.printSize.replace(/[^a-zA-Z0-9]/g, '_');
-          item.files.forEach(file => {
-            uploadQueue.push({ file: file, prefix: cleanSizeTag });
-          });
-        });
-
-        uploadFilesSequentially(uploadQueue);
+        const queue = photos.map(function (p, i) { return { photo: p, index: i }; });
+        uploadFilesSequentially(queue);
       })
-      .catch(function(err) {
+      .catch(function (err) {
         alert((err.fromServer ? 'Error processing order: ' : 'Server communication error: ') + err.message);
         resetForm();
       });
@@ -506,36 +942,45 @@
     });
   }
 
-  // Normal photos are sent exactly as they are. Very large phone photos (over
-  // ~6 MB or ~3600 px) are shrunk to a high-quality JPEG so uploads stay fast
-  // and under Cloudinary's file-size limit.
-  async function prepareImage(file) {
-    const MAX_SIDE = 3600, MAX_BYTES = 6 * 1024 * 1024;
-    if (window.createImageBitmap) {
-      try {
-        const bmp = await createImageBitmap(file);
-        const longSide = Math.max(bmp.width, bmp.height);
-        if (file.size <= MAX_BYTES && longSide <= MAX_SIDE) {
-          if (bmp.close) bmp.close();
-          return await readAsDataURL(file);
-        }
-        const scale = Math.min(1, MAX_SIDE / longSide);
-        const cv = document.createElement('canvas');
-        cv.width = Math.max(1, Math.round(bmp.width * scale));
-        cv.height = Math.max(1, Math.round(bmp.height * scale));
-        cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-        const url = cv.toDataURL('image/jpeg', 0.9);
-        cv.width = cv.height = 0;
-        if (bmp.close) bmp.close();
-        return url;
-      } catch (err) { /* browser can't decode it (e.g. some HEIC): send the original */ }
+  function safeName(name) {
+    const base = name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'photo';
+    return base;
+  }
+
+  // Renders the customer's chosen crop from the ORIGINAL photo at full quality,
+  // so what gets uploaded is exactly the picture that will be printed.
+  async function renderCropped(p) {
+    const url = URL.createObjectURL(p.file);
+    try {
+      const img = await loadImage(url);
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const r = cropRect(p, W, H);
+      const scale = Math.min(1, MAX_SIDE / Math.max(r.w, r.h));
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(r.w * scale));
+      cv.height = Math.max(1, Math.round(r.h * scale));
+      cv.getContext('2d').drawImage(img, r.x, r.y, r.w, r.h, 0, 0, cv.width, cv.height);
+      const dataUrl = cv.toDataURL('image/jpeg', 0.92);
+      cv.width = cv.height = 0;
+      return dataUrl;
+    } finally {
+      URL.revokeObjectURL(url);
     }
-    return readAsDataURL(file);
   }
 
   async function uploadOnePhoto(item) {
-    const dataUrl = await prepareImage(item.file);
-    const fileData = { name: item.file.name, prefix: item.prefix, base64: dataUrl };
+    const p = item.photo;
+    const sizeTag = p.size.replace(/[^a-zA-Z0-9]/g, '_');
+    const prefix = sizeTag + '_qty' + p.qty;   // e.g. 4x6_Standard_qty3
+    let dataUrl, name;
+    if (p.broken) {
+      dataUrl = await readAsDataURL(p.file);
+      name = String(item.index + 1).padStart(2, '0') + '_' + p.file.name;
+    } else {
+      dataUrl = await renderCropped(p);
+      name = String(item.index + 1).padStart(2, '0') + '_' + safeName(p.file.name) + '.jpg';
+    }
+    const fileData = { name: name, prefix: prefix, base64: dataUrl };
     let lastErr;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -559,7 +1004,7 @@
     for (let index = 0; index < queue.length; index++) {
       const item = queue[index];
       const progressPercent = Math.round((index / queue.length) * 100);
-      statusBox.innerText = `Uploading photo ${index + 1} of ${queue.length} (${item.file.name})...`;
+      statusBox.innerText = 'Uploading photo ' + (index + 1) + ' of ' + queue.length + '...';
       progressBar.style.width = progressPercent + '%';
       try {
         await uploadOnePhoto(item);
@@ -593,8 +1038,10 @@
     document.getElementById('uploadForm').style.display = 'block';
     document.getElementById('statusContainer').style.display = 'none';
     if (TURNSTILE_SITE_KEY && window.turnstile) { turnstile.reset(); turnstileToken = ''; }
-    renderCart();
+    renderSummary();
   }
+
+  renderPhotos();
 </script>
 </body>
 </html>
