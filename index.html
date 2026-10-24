@@ -165,6 +165,28 @@
     }
     .checkbox-group input { margin-top: 2px; width: 16px; height: 16px; }
 
+    /* Required choice: more prints later, or last set */
+    .choice-group {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+    }
+    .choice-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; }
+    .choice-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.88rem;
+      font-weight: normal;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+    .choice-option input { margin-top: 2px; width: 18px; height: 18px; flex: 0 0 auto; }
+    .choice-group.invalid { border-color: var(--error-border); background: var(--error-bg); }
+
     .estimate-box {
       background: #f1f5f9;
       padding: 12px 16px;
@@ -176,26 +198,6 @@
       font-weight: 600;
       font-size: 0.95rem;
     }
-    .choice-group {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-}
-.choice-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; }
-.choice-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 0;
-  font-size: 0.88rem;
-  font-weight: normal;
-  cursor: pointer;
-  margin-bottom: 0;
-}
-.choice-option input { margin-top: 2px; width: 18px; height: 18px; flex: 0 0 auto; }
-.choice-group.invalid { border-color: var(--error-border); background: var(--error-bg); }
     .estimate-price { color: var(--primary); font-size: 1.1rem; }
 
     .btn-submit {
@@ -327,6 +329,19 @@
       <input type="checkbox" id="copyrightCheck" required>
       <label for="copyrightCheck" style="font-weight:normal; display:inline;">
         I confirm that I own or have legal printing rights for all uploaded photos. *
+      </label>
+    </div>
+
+    <!-- Required: is this the whole order or will more prints follow? -->
+    <div class="choice-group" id="orderStatusGroup" role="radiogroup" aria-labelledby="orderStatusTitle">
+      <div class="choice-title" id="orderStatusTitle">Is this your complete order? *</div>
+      <label class="choice-option">
+        <input type="radio" name="orderStatus" value="more_later" required>
+        <span>I will be sending more prints for this order later.</span>
+      </label>
+      <label class="choice-option">
+        <input type="radio" name="orderStatus" value="final">
+        <span>This is my last set of prints for this order.</span>
       </label>
     </div>
 
@@ -730,6 +745,13 @@
     }
   }
 
+  // Clear the red highlight once the customer picks an option
+  document.querySelectorAll('input[name="orderStatus"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      document.getElementById('orderStatusGroup').classList.remove('invalid');
+    });
+  });
+
   // --------------------------------------------------------------------------
   // Crop editor
   // --------------------------------------------------------------------------
@@ -905,6 +927,16 @@
       return;
     }
 
+    // Customer must say whether more prints are coming or this is the last set
+    const orderStatusEl = document.querySelector('input[name="orderStatus"]:checked');
+    if (!orderStatusEl) {
+      const group = document.getElementById('orderStatusGroup');
+      group.classList.add('invalid');
+      group.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      alert('Please tell us whether you will be sending more prints later or this is your last set.');
+      return;
+    }
+
     let phoneDigits = document.getElementById('phoneNumber').value.replace(/\D/g, '');
     if (phoneDigits.length === 11 && phoneDigits.charAt(0) === '1') phoneDigits = phoneDigits.slice(1);
     if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(phoneDigits)) {
@@ -934,6 +966,7 @@
       address: document.getElementById('deliveryAddress').value,
       instructions: document.getElementById('deliveryInstructions').value,
       cartItems: cartItemsSummary,
+      orderStatus: orderStatusEl.value,   // "more_later" or "final"
       website: document.getElementById('website').value,
       turnstileToken: turnstileToken
     };
